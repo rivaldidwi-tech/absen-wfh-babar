@@ -1,21 +1,14 @@
 {
-  "name": "Presensi WFH Kominfo Babar",
+  "name": "Absensi Diskominfo Babar",
   "short_name": "AbsenBabar",
-  "description": "Aplikasi Absensi WFH Diskominfo Bangka Barat",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Logo_Kabupaten_Bangka_Barat.png/481px-Logo_Kabupaten_Bangka_Barat.png",
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Logo_Kabupaten_Bangka_Barat.png/512px-Logo_Kabupaten_Bangka_Barat.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Logo_Kabupaten_Bangka_Barat.png/481px-Logo_Kabupaten_Bangka_Barat.png",
-      "sizes": "192x192",
       "type": "image/png"
     }
   ]
