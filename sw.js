@@ -1,4 +1,4 @@
-const VERSION = 'v1.0.6'; // SETIAP KALI UPDATE KODE, NAIKKAN ANGKA INI
+const VERSION = 'v1.0.7'; // SETIAP KALI UPDATE KODE, NAIKKAN ANGKA INI
 const CACHE_NAME = `absen-kominfo-${VERSION}`;
 
 self.addEventListener('install', (e) => {
