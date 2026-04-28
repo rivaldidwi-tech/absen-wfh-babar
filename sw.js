@@ -1,22 +1,19 @@
-const VERSION = 'v1.0.3'; // Ganti ke v1.0.4 jika Bapak update kode lagi nanti
+const VERSION = 'v1.0.5'; // SETIAP KALI UPDATE KODE, NAIKKAN ANGKA INI
 const CACHE_NAME = `absen-kominfo-${VERSION}`;
 
-const assets = [
-  './',
-  'index.html',
-  'app.js',
-  'manifest.json'
-];
-
-// Tahap Install: Simpan file ke cache
 self.addEventListener('install', (e) => {
-  self.skipWaiting(); // Paksa SW baru untuk langsung aktif
+  self.skipWaiting(); // Paksa versi baru langsung aktif tanpa nunggu tab ditutup
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(assets))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        'index.html',
+        'app.js',
+        'manifest.json'
+      ]);
+    })
   );
 });
 
-// Tahap Aktivasi: Hapus cache versi lama agar tidak menumpuk
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -27,9 +24,8 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Tahap Fetch: Ambil dari cache, jika gagal baru ambil dari internet
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((response) => response || fetch(e.request))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
