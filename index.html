@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi WFH Diskominfo</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass-morphism { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-6">
+    
+    <div class="w-full max-w-md mb-8">
+        <h1 class="text-2xl font-bold text-blue-800">Halo, Rekan Kominfo!</h1>
+        <p class="text-slate-500">Silakan lakukan absensi hari ini.</p>
+    </div>
+
+    <div class="w-full max-w-md bg-white rounded-3xl p-6 shadow-xl shadow-blue-100 mb-6 border border-blue-50">
+        <div class="flex justify-between items-center mb-4">
+            <span id="date" class="text-sm font-medium text-slate-400">Selasa, 28 April 2026</span>
+            <span class="px-3 py-1 bg-green-100 text-green-600 text-xs rounded-full font-bold">WFH Aktif</span>
+        </div>
+        <div class="text-center py-4">
+            <div id="clock" class="text-4xl font-black text-slate-800 mb-2">08:00:00</div>
+            <p id="location-status" class="text-xs text-red-500">Mencari lokasi...</p>
+        </div>
+    </div>
+
+    <div class="w-full max-w-md grid grid-cols-2 gap-4">
+        <button onclick="prosesAbsen('Pagi')" id="btn-pagi" class="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">
+            Absen Pagi
+        </button>
+        <button onclick="prosesAbsen('Sore')" id="btn-sore" class="bg-slate-200 text-slate-400 p-4 rounded-2xl font-bold cursor-not-allowed">
+            Absen Sore
+        </button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
