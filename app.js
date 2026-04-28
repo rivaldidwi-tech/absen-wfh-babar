@@ -15,30 +15,34 @@ function updateButtonStates(now) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = (hours * 60) + minutes;
+    const isFriday = now.getDay() === 5; // Angka 5 adalah hari Jumat
     
     const btnPagi = document.getElementById('btn-pagi');
     const btnSore = document.getElementById('btn-sore');
 
-    // Reset style tombol
+    // Default: Matikan tombol
     [btnPagi, btnSore].forEach(btn => {
         btn.disabled = true;
-        btn.className = "bg-slate-200 text-slate-400 p-5 rounded-[1.5rem] font-black uppercase tracking-wider";
+        btn.className = "bg-slate-200 text-slate-400 p-5 rounded-[1.5rem] font-black uppercase tracking-wider cursor-not-allowed";
     });
 
-    // Pagi: Mulai 06:30 sampai 11:00 (untuk testing)
-    if (totalMinutes >= 390 && totalMinutes < 660) {
+    // JIKA BUKAN HARI JUMAT, BERHENTI DI SINI
+    if (!isFriday) return;
+
+    // Logika Tombol Pagi (Aktif dari jam 00:00 sampai 11:00 agar bisa diklik untuk cek notif)
+    if (totalMinutes < 660) { 
         setBtnActive(btnPagi, 'blue');
     }
 
-    // Sore: Mulai 16:30 - 23:59
-    if (totalMinutes >= 990) {
+    // Logika Tombol Sore (Aktif dari jam 12:00 sampai 23:59)
+    if (totalMinutes >= 720) {
         setBtnActive(btnSore, 'blue');
     }
 }
 
 function setBtnActive(el, color) {
     el.disabled = false;
-    el.className = `bg-${color}-600 text-white p-5 rounded-[1.5rem] font-black uppercase tracking-wider shadow-lg shadow-${color}-200 active:scale-95 transition-all`;
+    el.className = `bg-${color}-600 text-white p-5 rounded-[1.5rem] font-black uppercase tracking-wider shadow-lg shadow-${color}-200 active:scale-95 transition-all cursor-pointer`;
 }
 
 function checkLocation() {
@@ -81,20 +85,22 @@ async function prosesAbsen(tipe) {
     const totalMin = (h * 60) + m;
     let statusText = "TEPAT WAKTU";
 
+    // VALIDASI WAKTU SESUAI INSTRUKSI
     if (tipe === 'Pagi') {
-        if (totalMin < 390) return alert("Absensi pagi belum dimulai (06:30).");
-        
-        // --- LOGIKA JAM (UBAH DISINI) ---
-        // totalMin > 600 artinya jam 10:00 pagi.
-        if (totalMin > 600) { 
+        if (totalMin < 390) { // Sebelum 06:30
+            return alert("Absensi WFH Pagi dimulai pukul 06.30 WIB.");
+        }
+        if (totalMin >= 421) { // Mulai 07:01 (7*60 + 1)
             statusText = "TERLAMBAT";
             alert("Anda Terlambat!");
         } else {
             alert("Tepat waktu, selamat bekerja!");
         }
-    } else {
-        if (totalMin < 990) return alert("Absensi sore belum dimulai (16:30).");
-        alert("Absen sore berhasil!");
+    } else { // Absen Sore
+        if (totalMin < 990) { // Sebelum 16:30
+            return alert("Absensi WFH Sore dimulai pukul 16.30 WIB.");
+        }
+        alert("Absensi sore berhasil!");
     }
 
     // TAMPILKAN LOADING OVERLAY
@@ -138,7 +144,7 @@ async function prosesAbsen(tipe) {
                     globalBlob = new File([blob], "bukti-absen.png", { type: "image/png" });
                 });
             });
-        }, 1000); // Delay 1 detik agar peta benar-benar ter-render
+        }, 1200); 
     };
 }
 
