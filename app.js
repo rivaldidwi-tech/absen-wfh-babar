@@ -15,29 +15,13 @@ function updateButtonStates(now) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = (hours * 60) + minutes;
-    const isFriday = now.getDay() === 5; // Angka 5 adalah hari Jumat
     
     const btnPagi = document.getElementById('btn-pagi');
     const btnSore = document.getElementById('btn-sore');
 
-    // Default: Matikan tombol
-    [btnPagi, btnSore].forEach(btn => {
-        btn.disabled = true;
-        btn.className = "bg-slate-200 text-slate-400 p-5 rounded-[1.5rem] font-black uppercase tracking-wider cursor-not-allowed";
-    });
-
-    // JIKA BUKAN HARI JUMAT, BERHENTI DI SINI
-    if (!isFriday) return;
-
-    // Logika Tombol Pagi (Aktif dari jam 00:00 sampai 11:00 agar bisa diklik untuk cek notif)
-    if (totalMinutes < 660) { 
-        setBtnActive(btnPagi, 'blue');
-    }
-
-    // Logika Tombol Sore (Aktif dari jam 12:00 sampai 23:59)
-    if (totalMinutes >= 720) {
-        setBtnActive(btnSore, 'blue');
-    }
+    // Biarkan tombol aktif secara visual agar bisa diklik untuk memunculkan notif/peringatan
+    setBtnActive(btnPagi, 'blue');
+    setBtnActive(btnSore, 'blue');
 }
 
 function setBtnActive(el, color) {
@@ -75,24 +59,34 @@ function checkLocation() {
 }
 
 async function prosesAbsen(tipe) {
-    const nama = document.getElementById('user-name').value;
-    if (!nama) return alert("Silakan masukkan Nama Lengkap & Gelar!");
-    if (!locationValid) return alert("Absen gagal. Lokasi GPS Anda belum valid atau di luar Bangka Barat!");
-
     const now = new Date();
+    const isFriday = now.getDay() === 5; // 5 = Jumat
     const h = now.getHours();
     const m = now.getMinutes();
     const totalMin = (h * 60) + m;
+
+    // 1. VALIDASI HARI (WAJIB JUMAT)
+    if (!isFriday) {
+        return alert("Absensi WFH hanya dapat dilakukan pada hari JUMAT.");
+    }
+
+    // 2. VALIDASI NAMA
+    const nama = document.getElementById('user-name').value;
+    if (!nama) return alert("Silakan masukkan Nama Lengkap & Gelar!");
+
+    // 3. VALIDASI LOKASI
+    if (!locationValid) return alert("Absen gagal. Pastikan GPS aktif dan Anda berada di Bangka Barat!");
+
     let statusText = "TEPAT WAKTU";
 
-    // VALIDASI WAKTU SESUAI INSTRUKSI
+    // 4. VALIDASI JAM SESUAI INSTRUKSI
     if (tipe === 'Pagi') {
         if (totalMin < 390) { // Sebelum 06:30
             return alert("Absensi WFH Pagi dimulai pukul 06.30 WIB.");
         }
-        if (totalMin >= 421) { // Mulai 07:01 (7*60 + 1)
+        if (totalMin >= 421) { // Mulai 07:01
             statusText = "TERLAMBAT";
-            alert("Anda Terlambat!");
+            alert("Sistem mencatat: Anda TERLAMBAT.");
         } else {
             alert("Tepat waktu, selamat bekerja!");
         }
@@ -103,25 +97,23 @@ async function prosesAbsen(tipe) {
         alert("Absensi sore berhasil!");
     }
 
-    // TAMPILKAN LOADING OVERLAY
+    // TAMPILKAN LOADING
     const loading = document.getElementById('loading-overlay');
     if (loading) {
         loading.classList.remove('hidden');
         loading.classList.add('flex');
     }
 
-    // Set Data ke Kartu Share
+    // Set Data ke Kartu
     document.getElementById('card-name').innerText = nama;
     document.getElementById('card-time').innerText = now.toLocaleTimeString('id-ID', {hour12: false});
     document.getElementById('card-status-badge').innerText = statusText;
     document.getElementById('card-status-badge').className = statusText === "TERLAMBAT" ? "px-4 py-1.5 bg-red-600 text-white text-[11px] font-black rounded-lg uppercase" : "px-4 py-1.5 bg-blue-700 text-white text-[11px] font-black rounded-lg uppercase";
     document.getElementById('card-coords').innerText = `${currentCoords.lat.toFixed(6)}, ${currentCoords.lng.toFixed(6)}`;
     
-    // Load Gambar Peta
     const mapImg = document.getElementById('card-map');
     mapImg.src = `https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${currentCoords.lng},${currentCoords.lat}&z=14&l=map&pt=${currentCoords.lng},${currentCoords.lat},pm2rdm`;
 
-    // Proses Screenshot Kartu
     mapImg.onload = function() {
         setTimeout(() => {
             html2canvas(document.querySelector("#share-card"), { 
@@ -132,7 +124,6 @@ async function prosesAbsen(tipe) {
                 const imgData = canvas.toDataURL("image/png");
                 document.getElementById('image-placeholder').innerHTML = `<img src="${imgData}" class="w-full h-auto rounded-xl">`;
                 
-                // Sembunyikan Loading, Tampilkan Modal Hasil
                 if (loading) {
                     loading.classList.add('hidden');
                     loading.classList.remove('flex');
@@ -148,7 +139,7 @@ async function prosesAbsen(tipe) {
     };
 }
 
-// Logika Tombol Share Native
+// Logika Share Native
 const btnShare = document.getElementById('btn-share-native');
 if (btnShare) {
     btnShare.onclick = async () => {
@@ -159,9 +150,7 @@ if (btnShare) {
                     title: 'Bukti Absen WFH',
                     text: `Absensi WFH Diskominfo Babar - ${new Date().toLocaleDateString('id-ID')}`
                 });
-            } catch (err) {
-                console.log("Share dibatalkan");
-            }
+            } catch (err) { console.log("Share batal"); }
         } else {
             alert("Gunakan fitur 'Simpan Gambar' dengan menekan lama pada gambar.");
         }
@@ -171,7 +160,6 @@ if (btnShare) {
 setInterval(updateClock, 1000);
 window.onload = checkLocation;
 
-// Service Worker (Offline Mode)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
