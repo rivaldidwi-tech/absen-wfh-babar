@@ -9,6 +9,7 @@ self.addEventListener('install', (e) => {
         'index.html',
         'app.js',
         'manifest.json'
+        'logo.png'
       ]);
     })
   );
