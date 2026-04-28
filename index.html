@@ -3,38 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi WFH Diskominfo</title>
+    <title>Absensi WFH Diskominfo Babar</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        .glass-morphism { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); }
+        .font-share { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col items-center p-6">
+<body class="bg-slate-100 min-h-screen flex flex-col items-center p-4">
     
-    <div class="w-full max-w-md mb-8">
-        <h1 class="text-2xl font-bold text-blue-800">Halo, Rekan Kominfo!</h1>
-        <p class="text-slate-500">Silakan lakukan absensi hari ini.</p>
+    <div id="main-ui" class="w-full max-w-md">
+        <header class="mb-6 mt-4">
+            <h1 class="text-2xl font-bold text-blue-900">WFH Diskominfo</h1>
+            <p class="text-slate-500 text-sm">Kabupaten Bangka Barat</p>
+        </header>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-blue-50">
+            <label class="text-xs font-bold text-blue-800 uppercase tracking-wider">Identitas Pegawai</label>
+            <input type="text" id="user-name" placeholder="Nama Lengkap & Gelar..." 
+                class="w-full mt-2 p-3 bg-slate-50 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition">
+        </div>
+
+        <div class="bg-white rounded-3xl p-8 shadow-xl shadow-blue-100 text-center mb-6 border border-white">
+            <div id="current-date" class="text-slate-400 text-sm mb-1 font-medium">Memuat Tanggal...</div>
+            <div id="clock" class="text-5xl font-black text-slate-800 mb-4 tracking-tighter">00:00:00</div>
+            <div id="location-badge" class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                🛰️ Mencari GPS...
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="prosesAbsen('Pagi')" id="btn-pagi" class="bg-slate-200 text-slate-400 p-4 rounded-2xl font-bold transition-all duration-300">Absen Pagi</button>
+            <button onclick="prosesAbsen('Sore')" id="btn-sore" class="bg-slate-200 text-slate-400 p-4 rounded-2xl font-bold transition-all duration-300">Absen Sore</button>
+        </div>
+        <p class="text-center text-[10px] text-slate-400 mt-6 italic">*Khusus Hari Jumat</p>
     </div>
 
-    <div class="w-full max-w-md bg-white rounded-3xl p-6 shadow-xl shadow-blue-100 mb-6 border border-blue-50">
-        <div class="flex justify-between items-center mb-4">
-            <span id="date" class="text-sm font-medium text-slate-400">Selasa, 28 April 2026</span>
-            <span class="px-3 py-1 bg-green-100 text-green-600 text-xs rounded-full font-bold">WFH Aktif</span>
-        </div>
-        <div class="text-center py-4">
-            <div id="clock" class="text-4xl font-black text-slate-800 mb-2">08:00:00</div>
-            <p id="location-status" class="text-xs text-red-500">Mencari lokasi...</p>
+    <div id="share-card-container" class="fixed left-[-9999px]">
+        <div id="share-card" class="w-[400px] bg-white p-6 rounded-none relative overflow-hidden font-share">
+            <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="font-black text-blue-900 text-xl italic uppercase">BUKTI ABSENSI WFH</h2>
+                    <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Diskominfo Bangka Barat</p>
+                </div>
+                <div id="card-status-badge" class="px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded">TEPAT WAKTU</div>
+            </div>
+
+            <div class="mb-6">
+                <p class="text-[10px] text-slate-400 uppercase font-bold">Pegawai</p>
+                <p id="card-name" class="text-lg font-bold text-slate-800">Nama Lengkap</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Waktu</p>
+                    <p id="card-time" class="text-xl font-black text-blue-600">07:00:01</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Koordinat</p>
+                    <p id="card-coords" class="text-[10px] font-mono text-slate-700">-2.123, 105.123</p>
+                </div>
+            </div>
+
+            <div class="w-full h-32 bg-slate-200 rounded-xl overflow-hidden mb-4 border border-slate-100">
+                <img id="card-map" src="" class="w-full h-full object-cover">
+            </div>
+            
+            <p class="text-[9px] text-center text-slate-400 font-medium">📍 Lokasi Terverifikasi Sistem Geofencing Bangka Barat</p>
         </div>
     </div>
 
-    <div class="w-full max-w-md grid grid-cols-2 gap-4">
-        <button onclick="prosesAbsen('Pagi')" id="btn-pagi" class="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">
-            Absen Pagi
-        </button>
-        <button onclick="prosesAbsen('Sore')" id="btn-sore" class="bg-slate-200 text-slate-400 p-4 rounded-2xl font-bold cursor-not-allowed">
-            Absen Sore
-        </button>
+    <div id="result-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-6 z-50">
+        <div class="bg-white rounded-3xl p-4 w-full max-w-sm text-center">
+            <p class="text-sm font-bold text-slate-800 mb-4 text-blue-600">Absen Berhasil! Simpan gambar ini:</p>
+            <div id="image-placeholder" class="rounded-xl overflow-hidden border mb-4 shadow-lg"></div>
+            <button onclick="location.reload()" class="w-full bg-slate-900 text-white p-3 rounded-xl font-bold">Tutup & Selesai</button>
+        </div>
     </div>
 
     <script src="app.js"></script>
