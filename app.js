@@ -1,12 +1,11 @@
-// CONFIG: Batas Koordinat Bangka Barat
 const BB_BOUNDS = { latMin: -2.0833, latMax: -1.5000, lngMin: 105.0000, lngMax: 105.7500 };
 let currentCoords = { lat: 0, lng: 0 };
 let locationValid = false;
 
 function updateClock() {
     const now = new Date();
-    document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID');
-    document.getElementById('current-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour12: false});
+    document.getElementById('current-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     updateButtonStates(now);
 }
 
@@ -14,25 +13,22 @@ function updateButtonStates(now) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = (hours * 60) + minutes;
-    const isFriday = now.getDay() === 5;
     
     const btnPagi = document.getElementById('btn-pagi');
     const btnSore = document.getElementById('btn-sore');
 
-    // Reset styles
+    // Reset style tombol
     [btnPagi, btnSore].forEach(btn => {
         btn.disabled = true;
-        btn.className = "bg-slate-200 text-slate-400 p-4 rounded-2xl font-bold transition-all";
+        btn.className = "bg-slate-200 text-slate-400 p-5 rounded-[1.5rem] font-black uppercase tracking-wider";
     });
 
-    if (!isFriday) return; // Matikan jika bukan Jumat
-
-    // Logika Tombol Pagi (06:30 - 11:00)
-    if (totalMinutes >= 390 && totalMinutes < 660) {
+    // Pagi: Mulai 06:30
+    if (totalMinutes >= 390 && totalMinutes < 660) { // Sampai jam 11 siang
         setBtnActive(btnPagi, 'blue');
     }
 
-    // Logika Tombol Sore (16:30 - 23:59)
+    // Sore: Mulai 16:30 - 23:59
     if (totalMinutes >= 990) {
         setBtnActive(btnSore, 'blue');
     }
@@ -40,7 +36,7 @@ function updateButtonStates(now) {
 
 function setBtnActive(el, color) {
     el.disabled = false;
-    el.className = `bg-${color}-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-${color}-200 active:scale-95 transition-all`;
+    el.className = `bg-${color}-600 text-white p-5 rounded-[1.5rem] font-black uppercase tracking-wider shadow-lg shadow-${color}-200 active:scale-95 transition-all`;
 }
 
 function checkLocation() {
@@ -50,17 +46,17 @@ function checkLocation() {
             currentCoords = { lat: latitude, lng: longitude };
             const badge = document.getElementById('location-badge');
 
-            if (accuracy > 150) {
-                badge.innerText = "⚠️ Akurasi Rendah/Fake GPS";
-                badge.className = "inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-[10px] font-bold text-red-600 uppercase tracking-widest";
+            if (accuracy > 100) {
+                badge.innerText = "⚠️ Akurasi Lemah / Fake GPS";
+                badge.className = "inline-flex items-center px-4 py-2 rounded-full bg-red-100 text-[11px] font-black text-red-600 uppercase tracking-widest";
                 locationValid = false;
             } else if (latitude >= BB_BOUNDS.latMin && latitude <= BB_BOUNDS.latMax && longitude >= BB_BOUNDS.lngMin && longitude <= BB_BOUNDS.lngMax) {
                 badge.innerText = "✅ Bangka Barat (Terverifikasi)";
-                badge.className = "inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-[10px] font-bold text-green-600 uppercase tracking-widest";
+                badge.className = "inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-[11px] font-black text-green-600 uppercase tracking-widest";
                 locationValid = true;
             } else {
-                badge.innerText = "❌ Di Luar Wilayah Babar";
-                badge.className = "inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-[10px] font-bold text-red-600 uppercase tracking-widest";
+                badge.innerText = "❌ Di Luar Bangka Barat";
+                badge.className = "inline-flex items-center px-4 py-2 rounded-full bg-red-100 text-[11px] font-black text-red-600 uppercase tracking-widest";
                 locationValid = false;
             }
         }, null, { enableHighAccuracy: true });
@@ -69,8 +65,8 @@ function checkLocation() {
 
 async function prosesAbsen(tipe) {
     const nama = document.getElementById('user-name').value;
-    if (!nama) return alert("Silakan isi Nama Lengkap & Gelar!");
-    if (!locationValid) return alert("Lokasi tidak valid atau di luar Bangka Barat!");
+    if (!nama) return alert("Silakan masukkan Nama Lengkap & Gelar terlebih dahulu!");
+    if (!locationValid) return alert("Absen gagal. Anda harus berada di wilayah Bangka Barat!");
 
     const now = new Date();
     const h = now.getHours();
@@ -78,44 +74,42 @@ async function prosesAbsen(tipe) {
     const totalMin = (h * 60) + m;
     let statusText = "TEPAT WAKTU";
 
-    // Validasi Notifikasi sesuai permintaan
     if (tipe === 'Pagi') {
-        if (totalMin < 390) return alert("Absen mulai jam 06.30 ya!");
-        if (totalMin > 420) {
+        if (totalMin < 390) return alert("Absensi pagi belum dimulai. Silakan tunggu pukul 06.30.");
+        if (totalMin > 420) { // Lewat jam 07.00
             statusText = "TERLAMBAT";
             alert("Anda Terlambat!");
         } else {
             alert("Tepat waktu, selamat bekerja!");
         }
     } else {
-        if (totalMin < 990) return alert("Absen sore mulai jam 16.30 ya!");
-        alert("Absen sore berhasil!");
+        if (totalMin < 990) return alert("Absensi sore belum dimulai. Silakan tunggu pukul 16.30.");
+        alert("Absen sore berhasil disimpan!");
     }
 
-    // Persiapkan Kartu
+    // Isi Data Kartu
     document.getElementById('card-name').innerText = nama;
-    document.getElementById('card-time').innerText = now.toLocaleTimeString('id-ID');
+    document.getElementById('card-time').innerText = now.toLocaleTimeString('id-ID', {hour12: false});
     document.getElementById('card-status-badge').innerText = statusText;
-    document.getElementById('card-status-badge').className = statusText === "TERLAMBAT" ? "px-3 py-1 bg-red-600 text-white text-[10px] font-bold rounded" : "px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded";
-    document.getElementById('card-coords').innerText = `${currentCoords.lat.toFixed(5)}, ${currentCoords.lng.toFixed(5)}`;
+    document.getElementById('card-status-badge').className = statusText === "TERLAMBAT" ? "px-4 py-1.5 bg-red-600 text-white text-[11px] font-black rounded-lg" : "px-4 py-1.5 bg-blue-700 text-white text-[11px] font-black rounded-lg";
+    document.getElementById('card-coords').innerText = `${currentCoords.lat.toFixed(6)}, ${currentCoords.lng.toFixed(6)}`;
     
-    // Map Static (Yandex Maps API - Free & No Key)
+    // Minimap (Yandex Static)
     document.getElementById('card-map').src = `https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${currentCoords.lng},${currentCoords.lat}&z=14&l=map&pt=${currentCoords.lng},${currentCoords.lat},pm2rdm`;
 
-    // Tunggu gambar map load
+    // Generate Gambar
     setTimeout(() => {
-        html2canvas(document.querySelector("#share-card")).then(canvas => {
+        html2canvas(document.querySelector("#share-card"), { scale: 2 }).then(canvas => {
             const img = canvas.toDataURL("image/png");
-            document.getElementById('image-placeholder').innerHTML = `<img src="${img}" class="w-full h-auto rounded-lg">`;
+            document.getElementById('image-placeholder').innerHTML = `<img src="${img}" class="w-full h-auto">`;
             document.getElementById('result-modal').style.display = 'flex';
         });
-    }, 1000);
+    }, 1200);
 }
 
 setInterval(updateClock, 1000);
 window.onload = checkLocation;
 
-// Register Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
