@@ -1,7 +1,8 @@
+// CONFIG: Batas Wilayah Bangka Barat
 const BB_BOUNDS = { latMin: -2.0833, latMax: -1.5000, lngMin: 105.0000, lngMax: 105.7500 };
 let currentCoords = { lat: 0, lng: 0 };
 let locationValid = false;
-let globalBlob = null; // Untuk keperluan share file
+let globalBlob = null;
 
 function updateClock() {
     const now = new Date();
@@ -14,16 +15,25 @@ function updateButtonStates(now) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = (hours * 60) + minutes;
+    
     const btnPagi = document.getElementById('btn-pagi');
     const btnSore = document.getElementById('btn-sore');
 
+    // Reset style tombol
     [btnPagi, btnSore].forEach(btn => {
         btn.disabled = true;
         btn.className = "bg-slate-200 text-slate-400 p-5 rounded-[1.5rem] font-black uppercase tracking-wider";
     });
 
-    if (totalMinutes >= 390 && totalMinutes < 660) setBtnActive(btnPagi, 'blue');
-    if (totalMinutes >= 990) setBtnActive(btnSore, 'blue');
+    // Pagi: Mulai 06:30 sampai 11:00 (untuk testing)
+    if (totalMinutes >= 390 && totalMinutes < 660) {
+        setBtnActive(btnPagi, 'blue');
+    }
+
+    // Sore: Mulai 16:30 - 23:59
+    if (totalMinutes >= 990) {
+        setBtnActive(btnSore, 'blue');
+    }
 }
 
 function setBtnActive(el, color) {
@@ -54,7 +64,7 @@ function checkLocation() {
                 locationValid = false;
             }
         }, err => {
-            badge.innerText = "❌ GPS Off";
+            badge.innerText = "❌ GPS Tidak Aktif";
             locationValid = false;
         }, { enableHighAccuracy: true });
     }
@@ -62,71 +72,100 @@ function checkLocation() {
 
 async function prosesAbsen(tipe) {
     const nama = document.getElementById('user-name').value;
-    if (!nama) return alert("Isi Nama & Gelar dulu!");
-    if (!locationValid) return alert("GPS belum valid atau Anda di luar Bangka Barat!");
+    if (!nama) return alert("Silakan masukkan Nama Lengkap & Gelar!");
+    if (!locationValid) return alert("Absen gagal. Lokasi GPS Anda belum valid atau di luar Bangka Barat!");
 
     const now = new Date();
-    const totalMin = (now.getHours() * 60) + now.getMinutes();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const totalMin = (h * 60) + m;
     let statusText = "TEPAT WAKTU";
 
     if (tipe === 'Pagi') {
-        if (totalMin < 390) return alert("Absen mulai 06.30!");
-        if (totalMin > 420) { statusText = "TERLAMBAT"; alert("Anda Terlambat!"); }
-        else alert("Tepat waktu, selamat bekerja!");
+        if (totalMin < 390) return alert("Absensi pagi belum dimulai (06:30).");
+        
+        // --- LOGIKA JAM (UBAH DISINI) ---
+        // totalMin > 600 artinya jam 10:00 pagi.
+        if (totalMin > 600) { 
+            statusText = "TERLAMBAT";
+            alert("Anda Terlambat!");
+        } else {
+            alert("Tepat waktu, selamat bekerja!");
+        }
     } else {
-        if (totalMin < 990) return alert("Absen sore mulai 16.30!");
+        if (totalMin < 990) return alert("Absensi sore belum dimulai (16:30).");
         alert("Absen sore berhasil!");
     }
 
-    // Set Data Kartu
+    // TAMPILKAN LOADING OVERLAY
+    const loading = document.getElementById('loading-overlay');
+    if (loading) {
+        loading.classList.remove('hidden');
+        loading.classList.add('flex');
+    }
+
+    // Set Data ke Kartu Share
     document.getElementById('card-name').innerText = nama;
     document.getElementById('card-time').innerText = now.toLocaleTimeString('id-ID', {hour12: false});
     document.getElementById('card-status-badge').innerText = statusText;
-    document.getElementById('card-status-badge').className = statusText === "TERLAMBAT" ? "px-4 py-1.5 bg-red-600 text-white text-[11px] font-black rounded-lg" : "px-4 py-1.5 bg-blue-700 text-white text-[11px] font-black rounded-lg";
+    document.getElementById('card-status-badge').className = statusText === "TERLAMBAT" ? "px-4 py-1.5 bg-red-600 text-white text-[11px] font-black rounded-lg uppercase" : "px-4 py-1.5 bg-blue-700 text-white text-[11px] font-black rounded-lg uppercase";
     document.getElementById('card-coords').innerText = `${currentCoords.lat.toFixed(6)}, ${currentCoords.lng.toFixed(6)}`;
     
-    // FIX MAPS: Gunakan URL Static Maps yang support CORS
+    // Load Gambar Peta
     const mapImg = document.getElementById('card-map');
     mapImg.src = `https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${currentCoords.lng},${currentCoords.lat}&z=14&l=map&pt=${currentCoords.lng},${currentCoords.lat},pm2rdm`;
 
-    // Tunggu gambar map terisi penuh sebelum screenshot
+    // Proses Screenshot Kartu
     mapImg.onload = function() {
         setTimeout(() => {
             html2canvas(document.querySelector("#share-card"), { 
-                useCORS: true, // PENTING agar gambar maps tidak hilang
+                useCORS: true, 
                 scale: 2,
                 allowTaint: false
             }).then(canvas => {
                 const imgData = canvas.toDataURL("image/png");
-                document.getElementById('image-placeholder').innerHTML = `<img src="${imgData}" class="w-full h-auto">`;
+                document.getElementById('image-placeholder').innerHTML = `<img src="${imgData}" class="w-full h-auto rounded-xl">`;
+                
+                // Sembunyikan Loading, Tampilkan Modal Hasil
+                if (loading) {
+                    loading.classList.add('hidden');
+                    loading.classList.remove('flex');
+                }
                 document.getElementById('result-modal').classList.remove('hidden');
                 document.getElementById('result-modal').classList.add('flex');
 
-                // Siapkan file untuk native share
                 canvas.toBlob(blob => {
                     globalBlob = new File([blob], "bukti-absen.png", { type: "image/png" });
                 });
             });
-        }, 500);
+        }, 1000); // Delay 1 detik agar peta benar-benar ter-render
     };
 }
 
-// Fungsi Share Native HP
-document.getElementById('btn-share-native').onclick = async () => {
-    if (navigator.share && globalBlob) {
-        try {
-            await navigator.share({
-                files: [globalBlob],
-                title: 'Bukti Absen WFH',
-                text: 'Absensi Diskominfo Bangka Barat'
-            });
-        } catch (err) {
-            console.log("Share batal");
+// Logika Tombol Share Native
+const btnShare = document.getElementById('btn-share-native');
+if (btnShare) {
+    btnShare.onclick = async () => {
+        if (navigator.share && globalBlob) {
+            try {
+                await navigator.share({
+                    files: [globalBlob],
+                    title: 'Bukti Absen WFH',
+                    text: `Absensi WFH Diskominfo Babar - ${new Date().toLocaleDateString('id-ID')}`
+                });
+            } catch (err) {
+                console.log("Share dibatalkan");
+            }
+        } else {
+            alert("Gunakan fitur 'Simpan Gambar' dengan menekan lama pada gambar.");
         }
-    } else {
-        alert("Gunakan fitur Simpan Gambar (tekan lama gambar)");
-    }
-};
+    };
+}
 
 setInterval(updateClock, 1000);
 window.onload = checkLocation;
+
+// Service Worker (Offline Mode)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
