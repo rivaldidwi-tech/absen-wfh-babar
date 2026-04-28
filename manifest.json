@@ -9,7 +9,8 @@
     {
       "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Logo_Kabupaten_Bangka_Barat.png/512px-Logo_Kabupaten_Bangka_Barat.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
